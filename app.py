@@ -264,8 +264,22 @@ def read_excel_file(file_path):
     
     return student_data
 
-# Initialize session state to store student data across reruns
-if 'student_data' not in st.session_state:
+# Make sure we're using a fresh session state with no pandas objects
+if 'student_data' in st.session_state:
+    # Check if student_data is a pandas DataFrame (from a previous run)
+    # If so, convert it to a list of dictionaries
+    if hasattr(st.session_state.student_data, 'to_dict'):
+        try:
+            # Convert pandas DataFrame to list of dictionaries
+            pandas_data = st.session_state.student_data
+            records = pandas_data.to_dict('records')
+            st.session_state.student_data = records
+        except Exception as e:
+            # If conversion fails, start with an empty list
+            st.warning(f"Resetting data due to format change: {str(e)}")
+            st.session_state.student_data = []
+elif 'student_data' not in st.session_state:
+    # Initialize with empty list if not present
     st.session_state.student_data = []
 
 # Generate a unique filename for this session
@@ -276,8 +290,8 @@ if 'current_file' not in st.session_state:
 else:
     excel_file = st.session_state.current_file
 
-# Load data if needed
-if not st.session_state.student_data and os.path.exists(template_file):
+# Load data if needed - using len() is safer than direct boolean check
+if len(st.session_state.student_data) == 0 and os.path.exists(template_file):
     # Try to read from template if it exists
     student_data = read_excel_file(template_file)
     if student_data:
@@ -333,7 +347,7 @@ with st.form("payment_form", clear_on_submit=True):
 
 # Display existing data
 st.subheader("Payment Records")
-if st.session_state.student_data:
+if len(st.session_state.student_data) > 0:
     # Create a display version of the data
     display_data = []
     total_amount = 0.0
