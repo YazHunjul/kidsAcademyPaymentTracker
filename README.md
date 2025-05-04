@@ -31,19 +31,31 @@ A Streamlit application to track student payments and store them in an Excel fil
      venv\Scripts\activate
      ```
 
-3. Install the required packages:
+3. Install wheel and setuptools first for faster dependency installation:
+
+   ```
+   pip install --upgrade pip wheel setuptools
+   ```
+
+4. Install the required packages:
 
    ```
    pip install -r requirements.txt
    ```
 
-4. Install watchdog for better performance (optional):
+   Or install directly from the setup.py:
+
+   ```
+   pip install -e .
+   ```
+
+5. Install watchdog for better performance (optional):
 
    ```
    pip install watchdog
    ```
 
-5. Run the application:
+6. Run the application:
 
    ```
    streamlit run app.py
@@ -57,13 +69,19 @@ A Streamlit application to track student payments and store them in an Excel fil
 
 ### Option 2: Direct Installation
 
-1. Install the required packages:
+1. Install wheel for faster dependency installation:
+
+   ```
+   pip install --upgrade pip wheel setuptools
+   ```
+
+2. Install the required packages:
 
    ```
    pip install -r requirements.txt
    ```
 
-2. Run the application:
+3. Run the application:
    ```
    streamlit run app.py
    ```
@@ -82,3 +100,4 @@ A Streamlit application to track student payments and store them in an Excel fil
 - Pandas 2.0.3
 - OpenPyXL 3.1.2
 - Watchdog (recommended for better performance)
+- Wheel (for faster package installation)
