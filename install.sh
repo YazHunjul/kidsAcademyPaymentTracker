@@ -12,8 +12,8 @@ source venv/bin/activate
 # Update pip, wheel and setuptools
 pip install --upgrade pip wheel setuptools
 
-# Install core dependencies without optional extras
-pip install --no-deps streamlit==1.24.0
+# Install dependencies directly
+pip install streamlit>=1.28.0
 pip install openpyxl==3.1.2
 pip install watchdog>=3.0.0
 pip install pillow>=10.0.0

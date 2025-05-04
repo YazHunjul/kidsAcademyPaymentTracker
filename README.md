@@ -5,14 +5,34 @@ A Streamlit application to track student payments and store them in an Excel fil
 ## Features
 
 - Enter student name, payment amount, and date
-- Data is saved in an Excel file (`student_payments.xlsx`)
+- Data is saved in an Excel file
 - View all payment records in a table
 - Download the Excel file directly from the app
 - Data starts at row 15 in the Excel file to allow space for headers, logos, etc.
 
 ## Installation
 
-### Option 1: Using Virtual Environment (Recommended)
+### Quick Installation (Recommended)
+
+Use the provided installation script:
+
+```
+./install.sh
+```
+
+This will:
+
+1. Create a virtual environment
+2. Install all required dependencies
+3. Set up everything needed to run the application
+
+After installation, run the app with:
+
+```
+./run.sh
+```
+
+### Manual Installation
 
 1. Create a virtual environment:
 
@@ -31,57 +51,14 @@ A Streamlit application to track student payments and store them in an Excel fil
      venv\Scripts\activate
      ```
 
-3. Install wheel and setuptools first for faster dependency installation:
+3. Install dependencies:
 
    ```
    pip install --upgrade pip wheel setuptools
-   ```
-
-4. Install the required packages:
-
-   ```
    pip install -r requirements.txt
    ```
 
-   Or install directly from the setup.py:
-
-   ```
-   pip install -e .
-   ```
-
-5. Install watchdog for better performance (optional):
-
-   ```
-   pip install watchdog
-   ```
-
-6. Run the application:
-
-   ```
-   streamlit run app.py
-   ```
-
-   Or use the provided script:
-
-   ```
-   ./run.sh
-   ```
-
-### Option 2: Direct Installation
-
-1. Install wheel for faster dependency installation:
-
-   ```
-   pip install --upgrade pip wheel setuptools
-   ```
-
-2. Install the required packages:
-
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Run the application:
+4. Run the application:
    ```
    streamlit run app.py
    ```
@@ -96,8 +73,8 @@ A Streamlit application to track student payments and store them in an Excel fil
 ## Requirements
 
 - Python 3.7+
-- Streamlit 1.24.0
-- Pandas 2.0.3
+- Streamlit 1.28.0+
 - OpenPyXL 3.1.2
-- Watchdog (recommended for better performance)
+- Pillow 10.0.0+
+- Watchdog (for better performance)
 - Wheel (for faster package installation)

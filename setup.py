@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 # Define dependencies
 install_requires = [
-    "streamlit==1.24.0",
+    "streamlit>=1.28.0",
     "openpyxl==3.1.2",
     "watchdog>=3.0.0",
     "wheel>=0.42.0",
