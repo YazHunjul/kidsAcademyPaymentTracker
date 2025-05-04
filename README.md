@@ -8,8 +8,54 @@ A Streamlit application to track student payments and store them in an Excel fil
 - Data is saved in an Excel file (`student_payments.xlsx`)
 - View all payment records in a table
 - Download the Excel file directly from the app
+- Data starts at row 15 in the Excel file to allow space for headers, logos, etc.
 
 ## Installation
+
+### Option 1: Using Virtual Environment (Recommended)
+
+1. Create a virtual environment:
+
+   ```
+   python -m venv venv
+   ```
+
+2. Activate the virtual environment:
+
+   - On macOS/Linux:
+     ```
+     source venv/bin/activate
+     ```
+   - On Windows:
+     ```
+     venv\Scripts\activate
+     ```
+
+3. Install the required packages:
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Install watchdog for better performance (optional):
+
+   ```
+   pip install watchdog
+   ```
+
+5. Run the application:
+
+   ```
+   streamlit run app.py
+   ```
+
+   Or use the provided script:
+
+   ```
+   ./run.sh
+   ```
+
+### Option 2: Direct Installation
 
 1. Install the required packages:
 
@@ -32,6 +78,7 @@ A Streamlit application to track student payments and store them in an Excel fil
 ## Requirements
 
 - Python 3.7+
-- Streamlit
-- Pandas
-- OpenPyXL
+- Streamlit 1.24.0
+- Pandas 2.0.3
+- OpenPyXL 3.1.2
+- Watchdog (recommended for better performance)
