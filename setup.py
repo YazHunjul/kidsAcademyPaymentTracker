@@ -1,17 +1,13 @@
 from setuptools import setup, find_packages
-import platform
 
-# Define base dependencies
+# Define dependencies
 install_requires = [
     "streamlit==1.24.0",
     "openpyxl==3.1.2",
     "watchdog>=3.0.0",
     "wheel>=0.42.0",
+    "pillow>=10.0.0",
 ]
-
-# Add platform-specific dependencies
-if platform.system() != "Darwin":  # Not macOS
-    install_requires.append("pillow>=9.0.0")
 
 setup(
     name="student-payment-tracker",

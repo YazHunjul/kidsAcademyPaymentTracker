@@ -16,6 +16,7 @@ pip install --upgrade pip wheel setuptools
 pip install --no-deps streamlit==1.24.0
 pip install openpyxl==3.1.2
 pip install watchdog>=3.0.0
+pip install pillow>=10.0.0
 
 # Create a flag file to indicate installation is complete
 touch venv/installed.flag
