@@ -1,12 +1,10 @@
 import streamlit as st
-import pandas as pd
 from datetime import date
 import os
 import openpyxl
 import shutil
 from datetime import datetime
 from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
-import numpy as np
 
 # Set page title and configuration
 st.set_page_config(page_title="Student Payment Tracker", layout="wide")
@@ -21,7 +19,7 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 # Function to write data to Excel while preserving template formatting
-def write_excel_file(file_path, dataframe):
+def write_excel_file(file_path, student_data):
     # Define the header row - start at row 15 as requested
     HEADER_ROW = 15
     
@@ -95,15 +93,15 @@ def write_excel_file(file_path, dataframe):
     # Calculate total payment amount
     total_payment = 0.0
     
-    # Fill in data, making each value occupy two columns - ENSURE CORRECT COLUMN ORDER
-    for row_idx, row_data in enumerate(dataframe.values, start=start_row):
+    # Fill in data, making each value occupy two columns
+    for row_idx, row_data in enumerate(student_data, start=start_row):
         # Set row color
         color_idx = (row_idx - start_row) % len(colors)
         row_fill = PatternFill(start_color=colors[color_idx], end_color=colors[color_idx], fill_type="solid")
         
         try:
-            # Student Name in A and B (ensure title case) - INDEX 0
-            # Always merge these cells regardless of existing content (fix for merged cells)
+            # Student Name in A and B (ensure title case)
+            # Always merge these cells regardless of existing content
             try:
                 ws.merge_cells(f'A{row_idx}:B{row_idx}')
             except:
@@ -115,12 +113,12 @@ def write_excel_file(file_path, dataframe):
                     pass  # If this fails too, just proceed
                 
             cell = ws.cell(row=row_idx, column=1)
-            student_name_val = str(row_data[0]).title() if row_data[0] is not None else ""
+            student_name_val = str(row_data["Student Name"]).title() if row_data["Student Name"] is not None else ""
             cell.value = student_name_val
             cell.alignment = center_alignment
             cell.fill = row_fill
         
-            # Payment Amount in C and D - add AED prefix - INDEX 1
+            # Payment Amount in C and D - add AED prefix
             try:
                 ws.merge_cells(f'C{row_idx}:D{row_idx}')
             except:
@@ -132,7 +130,7 @@ def write_excel_file(file_path, dataframe):
                 
             cell = ws.cell(row=row_idx, column=3)
             # Handle the payment amount appropriately
-            amount_value = row_data[1]  # Payment Amount
+            amount_value = row_data["Payment Amount"]  # Payment Amount
             
             # Try to convert to float for accumulating the total
             try:
@@ -148,7 +146,7 @@ def write_excel_file(file_path, dataframe):
             cell.alignment = center_alignment
             cell.fill = row_fill
             
-            # Payment Date in E and F - INDEX 2
+            # Payment Date in E and F
             try:
                 ws.merge_cells(f'E{row_idx}:F{row_idx}')
             except:
@@ -159,7 +157,7 @@ def write_excel_file(file_path, dataframe):
                     pass
                 
             cell = ws.cell(row=row_idx, column=5)
-            date_val = str(row_data[2]) if row_data[2] is not None else ""
+            date_val = str(row_data["Payment Date"]) if row_data["Payment Date"] is not None else ""
             cell.value = date_val
             cell.alignment = center_alignment
             cell.fill = row_fill
@@ -168,7 +166,7 @@ def write_excel_file(file_path, dataframe):
             continue  # Skip this row if there's an error
     
     # Add a total row ONLY after the last student
-    total_row = len(dataframe.values) + start_row  # +start_row to account for headers
+    total_row = len(student_data) + start_row  # +start_row to account for headers
     
     # "Total" label in columns A and B
     try:
@@ -216,9 +214,59 @@ def write_excel_file(file_path, dataframe):
     except Exception as e:
         st.error(f"Error saving workbook: {str(e)}")
 
+# Function to read data from Excel file
+def read_excel_file(file_path):
+    student_data = []
+    if not os.path.exists(file_path):
+        return student_data
+    
+    try:
+        wb = openpyxl.load_workbook(file_path)
+        ws = wb.active
+        
+        # Find where the data starts - row 16 (after header at row 15)
+        data_start_row = 16
+        
+        # Read rows until we find an empty row or "Total"
+        row = data_start_row
+        while True:
+            student_name = ws.cell(row=row, column=1).value
+            
+            # Stop if we hit an empty row or "Total"
+            if not student_name or (isinstance(student_name, str) and student_name.lower() == "total"):
+                break
+                
+            payment_cell = ws.cell(row=row, column=3).value
+            payment_amount = 0.0
+            
+            # Try to extract numeric value from payment cell
+            if payment_cell:
+                try:
+                    # Remove "AED" and convert to float
+                    payment_str = str(payment_cell).replace("AED", "").strip()
+                    payment_amount = float(payment_str) if payment_str else 0.0
+                except (ValueError, TypeError):
+                    payment_amount = 0.0
+            
+            payment_date = ws.cell(row=row, column=5).value
+            payment_date_str = str(payment_date) if payment_date else ""
+            
+            # Add to our data collection
+            student_data.append({
+                "Student Name": student_name,
+                "Payment Amount": payment_amount,
+                "Payment Date": payment_date_str
+            })
+            
+            row += 1
+    except Exception as e:
+        st.warning(f"Could not read data from template: {str(e)}")
+    
+    return student_data
+
 # Initialize session state to store student data across reruns
 if 'student_data' not in st.session_state:
-    st.session_state.student_data = pd.DataFrame(columns=["Student Name", "Payment Amount", "Payment Date"])
+    st.session_state.student_data = []
 
 # Generate a unique filename for this session
 if 'current_file' not in st.session_state:
@@ -228,77 +276,12 @@ if 'current_file' not in st.session_state:
 else:
     excel_file = st.session_state.current_file
 
-# Check if we should try to read from existing template
-if not st.session_state.student_data.empty:
-    # We already have data, use what's in session state
-    df = st.session_state.student_data
-else:
-    # Try to read from template or start fresh
-    if os.path.exists(template_file):
-        try:
-            # Create default empty DataFrame
-            df = pd.DataFrame(columns=["Student Name", "Payment Amount", "Payment Date"])
-            
-            # Try to read data from existing template file
-            try:
-                # Read raw data
-                raw_df = pd.read_excel(template_file)
-                
-                # If there's data, extract what we can
-                if not raw_df.empty:
-                    # Look for data that appears to be student records - skip first 15 rows
-                    for idx, row in raw_df.iterrows():
-                        # Skip header row(s), rows with "Total", and all rows before row 15
-                        if idx < 15 or (isinstance(row.iloc[0], str) and "total" in str(row.iloc[0]).lower()):
-                            continue
-                            
-                        # Extract data from row - handle varying column counts
-                        name = str(row.iloc[0]) if len(row) > 0 else ""
-                        
-                        # Try to get payment amount, which might be in column 1 or 2
-                        payment = None
-                        if len(row) > 1:
-                            try:
-                                # Try to convert to float
-                                payment = float(str(row.iloc[1]).replace("AED", "").strip())
-                            except:
-                                # If it fails, try the next column
-                                if len(row) > 2:
-                                    try:
-                                        payment = float(str(row.iloc[2]).replace("AED", "").strip())
-                                    except:
-                                        payment = 0.0
-                                else:
-                                    payment = 0.0
-                        else:
-                            payment = 0.0
-                        
-                        # Get date from remaining column
-                        date_val = ""
-                        if len(row) > 2:
-                            date_val = str(row.iloc[2])
-                        
-                        # Add to our dataframe if it looks like a valid entry
-                        if name and name.strip() and name.lower() != "total":
-                            df = pd.concat([df, pd.DataFrame([{
-                                "Student Name": name,
-                                "Payment Amount": payment,
-                                "Payment Date": date_val
-                            }])], ignore_index=True)
-            except Exception as e:
-                st.warning(f"Could not read existing data from template: {str(e)}")
-                # Continue with empty dataframe
-                
-            # Save the initial data to session state
-            st.session_state.student_data = df
-        except Exception as e:
-            st.error(f"Error initializing data: {str(e)}")
-            df = pd.DataFrame(columns=["Student Name", "Payment Amount", "Payment Date"])
-            st.session_state.student_data = df
-    else:
-        # No template, start with empty DataFrame
-        df = pd.DataFrame(columns=["Student Name", "Payment Amount", "Payment Date"])
-        st.session_state.student_data = df
+# Load data if needed
+if not st.session_state.student_data and os.path.exists(template_file):
+    # Try to read from template if it exists
+    student_data = read_excel_file(template_file)
+    if student_data:
+        st.session_state.student_data = student_data
 
 # Display current file being used
 st.info(f"Working with file: {os.path.basename(excel_file)}")
@@ -333,7 +316,7 @@ with st.form("payment_form", clear_on_submit=True):
             # Format date as YYYY-MM-DD string
             formatted_date = payment_date.strftime('%Y-%m-%d')
             
-            # Add new data to dataframe and save to session state
+            # Add new data
             new_data = {
                 "Student Name": formatted_name,
                 "Payment Amount": payment_amount,
@@ -341,59 +324,42 @@ with st.form("payment_form", clear_on_submit=True):
             }
             
             # Append to the session state data
-            st.session_state.student_data = pd.concat([
-                st.session_state.student_data, 
-                pd.DataFrame([new_data])
-            ], ignore_index=True)
-            
-            # Update the local variable too
-            df = st.session_state.student_data
+            st.session_state.student_data.append(new_data)
             
             # Write the Excel file with all entries
-            write_excel_file(excel_file, df)
+            write_excel_file(excel_file, st.session_state.student_data)
             
             st.success(f"Payment of AED {payment_amount:.2f} for {formatted_name} has been recorded!")
 
 # Display existing data
 st.subheader("Payment Records")
-if not df.empty:
-    # Try to convert Payment Amount column to numeric, coercing errors to NaN
-    display_df = df.copy()
-    display_df["Payment Amount"] = pd.to_numeric(display_df["Payment Amount"], errors="coerce")
+if st.session_state.student_data:
+    # Create a display version of the data
+    display_data = []
+    total_amount = 0.0
     
-    # Calculate total amount for display with error handling
-    try:
-        total_amount = display_df["Payment Amount"].sum()
-        if pd.isna(total_amount):
-            total_amount_str = "AED 0.00 (some values couldn't be summed)"
-        else:
-            total_amount_str = f"AED {total_amount:.2f}"
-    except Exception:
-        total_amount_str = "AED 0.00 (error calculating sum)"
-    
-    # Format payment amount to show AED in the display table
-    # Also ensure student names are in title case
-    
-    # Format student names in title case
-    display_df["Student Name"] = display_df["Student Name"].apply(lambda x: str(x).title() if x is not None else "")
-    
-    # Safely format the payment amount with error handling
-    def format_amount(x):
+    for entry in st.session_state.student_data:
+        # Format student name in title case
+        name = str(entry["Student Name"]).title() if entry["Student Name"] else ""
+        
+        # Format payment amount
         try:
-            if pd.isna(x):
-                return "AED 0.00"
-            elif isinstance(x, (int, float)):
-                return f"AED {x:.2f}"
-            else:
-                return f"AED {x}" if not str(x).startswith('AED') else x
-        except:
-            return f"AED {x}" if x is not None else "AED 0.00"
+            amount = float(entry["Payment Amount"]) if entry["Payment Amount"] is not None else 0.0
+            total_amount += amount
+            formatted_amount = f"AED {amount:.2f}"
+        except (ValueError, TypeError):
+            formatted_amount = f"AED {entry['Payment Amount']}" if entry["Payment Amount"] else "AED 0.00"
+        
+        # Add to display data
+        display_data.append({
+            "Student Name": name,
+            "Payment Amount": formatted_amount,
+            "Payment Date": entry["Payment Date"]
+        })
     
-    display_df["Payment Amount"] = display_df["Payment Amount"].apply(format_amount)
-    
-    # Set custom column widths for the dataframe display
+    # Show the data in a Streamlit table
     st.dataframe(
-        display_df,
+        display_data,
         column_config={
             "Student Name": st.column_config.TextColumn("Student Name", width="large"),
             "Payment Amount": st.column_config.TextColumn("Payment Amount", width="medium"),
@@ -403,7 +369,7 @@ if not df.empty:
     )
     
     # Display the total
-    st.info(f"Total Amount: {total_amount_str}")
+    st.info(f"Total Amount: AED {total_amount:.2f}")
 else:
     st.info("No payment records found. Add a payment to get started!")
 
