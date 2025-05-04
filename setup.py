@@ -7,10 +7,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "streamlit==1.24.0",
-        "pandas==2.0.3",
         "openpyxl==3.1.2",
         "watchdog>=3.0.0",
-        "numpy>=1.25.0",
         "wheel>=0.42.0",
     ],
     author="Yazan Hunjul",
